@@ -42,8 +42,8 @@ class Clarifai
   # Array of Clarifai::Result items
   def tag(image_urls)
     encoded_urls = image_urls.map { |url| URI.encode(url) }
-    response = RestClient.request.execute(method: :post, url: "#{@configuration.url_prefix}/tag",
-      headers: {"Authorization" => "Bearer #{@configuration.access_token}", params: {url: encoded_urls}})
+    response = RestClient.post "#{@configuration.url_prefix}/tag", {url: encoded_urls},
+      {Authorization: "Bearer #{@configuration.access_token}"}
     if response.code == 200
       return parse_tag_response(response.body)
     end
@@ -58,9 +58,8 @@ class Clarifai
   # tags::
   #   An array of strings representing the new tags for the images
   def add_tags(docids, tags)
-    RestClient.request.execute(method: :post, url: "#{@configuration.url_prefix}/feedback",
-      headers: {"Authorization" => "Bearer #{@configuration.access_token}",
-      params: {docids: docids.join(","), add_tags: tags.join(",")}})
+    RestClient.post "#{@configuration.url_prefix}/tag", {docids: docids.join(","), add_tags: tags.join(",")},
+      {Authorization: "Bearer #{@configuration.access_token}"}
   end
 
   # Removes tags from a set of images to improve the image recognition
@@ -71,9 +70,8 @@ class Clarifai
   # tags::
   #   An array of strings representing the tags to remove from the images
   def remove_tags(docids, tags)
-    RestClient.request.execute(method: :post, url: "#{@configuration.url_prefix}/feedback",
-      headers: {"Authorization" => "Bearer #{@configuration.access_token}",
-      params: {docids: docids.join(","), remove_tags: tags.join(",")}})
+    RestClient.post "#{@configuration.url_prefix}/tag", {docids: docids.join(","), remove_tags: tags.join(",")},
+      {Authorization: "Bearer #{@configuration.access_token}"}
   end
 
   # Add similar images for a set of images
@@ -84,9 +82,9 @@ class Clarifai
   # similar_docids::
   #   An array of strings representing the docids for the images that are similar to the above
   def add_similar_images(docids, similar_docids)
-    RestClient.request.execute(method: :post, url: "#{@configuration.url_prefix}/feedback",
-      headers: {"Authorization" => "Bearer #{@configuration.access_token}",
-      params: {docids: docids.join(","), similar_docids: tags.join(",")}})
+    RestClient.post "#{@configuration.url_prefix}/tag", {docids: docids.join(","),
+      similar_docids: similar_docids.join(",")},
+      {Authorization: "Bearer #{@configuration.access_token}"}
   end
 
   # Add dissimilar images for a set of images
@@ -97,64 +95,65 @@ class Clarifai
   # dissimilar_docids::
   #   An array of strings representing the docids for the images that are *not* similar to the above
   def add_dissimilar_images(docids, dissimilar_docids)
-    RestClient.request.execute(method: :post, url: "#{@configuration.url_prefix}/feedback",
-      headers: {"Authorization" => "Bearer #{@configuration.access_token}",
-      params: {docids: docids.join(","), dissimilar_docids: tags.join(",")}})
+    RestClient.post "#{@configuration.url_prefix}/tag", {docids: docids.join(","),
+      dissimilar_docids: dissimilar_docids.join(",")},
+      {Authorization: "Bearer #{@configuration.access_token}"}
   end
 
   private
-  #   Sample response (v1 API):
-  #   [
-  #   {
-  #     "docid": 11914729235034958001,
-  #     "url": "http://d397nxo9hbvzsm.cloudfront.net/uploads/images/scaled_full_012fec4cd8.jpg",
-  #     "status_code": "OK",
-  #     "status_msg": "OK",
-  #     "local_id": "",
-  #     "result": {
-  #       "tag": {
-  #         "concept_ids": [
-  #           "ai_gCtlSsl1",
-  #           ...
-  #         ],
-  #         "classes": [
-  #           "bathroom",
-  #           ...
-  #         ],
-  #         "probs": [
-  #           0.9999986886978149,
-  #           ...
-  #         ]
-  #       }
-  #     },
-  #     "docid_str": "57250b4ff37e199fa5599f1cc1386570"
-  #   },
-  #   {
-  #     "docid": 11914729235034958002,
-  #     "url": "http://d397nxo9hbvzsm.cloudfront.net/uploads/images/scaled_full_012fec5ed8.jpg",
-  #     "status_code": "OK",
-  #     "status_msg": "OK",
-  #     "local_id": "",
-  #     "result": {
-  #       "tag": {
-  #         "concept_ids": [
-  #           "ai_gCtlSsl3",
-  #           ...
-  #         ],
-  #         "classes": [
-  #           "bathroom",
-  #           ...
-  #         ],
-  #         "probs": [
-  #           0.9999825358390808,
-  #         ]
-  #       }
-  #     },
-  #     "docid_str": "57250b4ff37e199fa5599f1cc1386586"
-  #   }
-  # ]
 
   def parse_tag_response(body)
+    #   Sample response (v1 API):
+    #   [
+    #   {
+    #     "docid": 11914729236034958001,
+    #     "url": "http://d397nxo9hbvzsm.cloudfront.net/uploads/images/scaled_full_012fec4cd8.jpg",
+    #     "status_code": "OK",
+    #     "status_msg": "OK",
+    #     "local_id": "",
+    #     "result": {
+    #       "tag": {
+    #         "concept_ids": [
+    #           "ai_gCtlSsl1",
+    #           ...
+    #         ],
+    #         "classes": [
+    #           "bathroom",
+    #           ...
+    #         ],
+    #         "probs": [
+    #           0.9999986886978149,
+    #           ...
+    #         ]
+    #       }
+    #     },
+    #     "docid_str": "57250b4ff37e199fa5599f1cc1386570"
+    #   },
+    #   {
+    #     "docid": 11914729236034958002,
+    #     "url": "http://d397nxo9hbvzsm.cloudfront.net/uploads/images/scaled_full_012fec5ed8.jpg",
+    #     "status_code": "OK",
+    #     "status_msg": "OK",
+    #     "local_id": "",
+    #     "result": {
+    #       "tag": {
+    #         "concept_ids": [
+    #           "ai_gCtlSsl3",
+    #           ...
+    #         ],
+    #         "classes": [
+    #           "bathroom",
+    #           ...
+    #         ],
+    #         "probs": [
+    #           0.9999825358390808,
+    #         ]
+    #       }
+    #     },
+    #     "docid_str": "57250b4ff37e199fa5599f1cc1386586"
+    #   }
+    # ]
+
     ret = []
     results = JSON.parse(body)['results']
     results.each do |result|

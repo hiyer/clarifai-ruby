@@ -24,8 +24,7 @@ class Clarifai
   # Hash with the usage limits, as specified here:
   # https://developer.clarifai.com/docs/info
   def info
-    response = RestClient.request.execute(method: :get, url: "#{@configuration.url_prefix}/info",
-      headers: {"Authorization" => "Bearer #{@configuration.access_token}"})
+    response = RestClient.get "#{@configuration.url_prefix}/info", {"Authorization" => "Bearer #{@configuration.access_token}"}
     if response.code == 200
       return JSON.parse(response.body)
     end

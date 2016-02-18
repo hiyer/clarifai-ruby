@@ -7,6 +7,6 @@ class Clarifai::Configuration
   end
 
   def url_prefix
-    "#{@url}/v#{@version}"
+    "#{@url}/v#{@api_version}"
   end
 end

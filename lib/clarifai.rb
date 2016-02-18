@@ -5,7 +5,7 @@ require 'uri'
 class Clarifai
   class << self
     # Setters for configuration
-    attr_writer :configuration
+    attr_writer :configuration, :token, :token_expiry
   end
 
   def self.configuration
@@ -16,6 +16,23 @@ class Clarifai
     yield configuration if block_given?
   end
 
+  def access_token
+    if @token && @token_expiry && @token_expiry < Time.zone.now - 1.hour
+      return @token
+    end
+
+    config = self.class.configuration
+    response = RestClient.post "#{config.url_prefix}/token", {client_id: config.client_id, client_secret: config.client_secret}
+
+    if response.status_code != 200
+      raise "Unable to get access token: #{response.body}"
+    end
+
+    json = JSON.parse(response.body)
+    @token = json['access_token']
+    @token_expiry = Time.zone.now + (json['expires_in'] || 36000).seconds
+  end
+
   # Returns usage limits for the specified Access Token
   #
   # == Returns:
@@ -23,7 +40,7 @@ class Clarifai
   # https://developer.clarifai.com/docs/info
   def info
     config = self.class.configuration
-    response = RestClient.get "#{config.url_prefix}/info", {"Authorization" => "Bearer #{config.access_token}"}
+    response = RestClient.get "#{config.url_prefix}/info", {"Authorization" => "Bearer #{access_token}"}
     if response.code == 200
       return JSON.parse(response.body)
     end
@@ -42,7 +59,7 @@ class Clarifai
     encoded_urls = image_urls.map { |url| URI.encode(url) }
     config = self.class.configuration
     response = RestClient.post "#{config.url_prefix}/tag", {url: encoded_urls},
-      {Authorization: "Bearer #{config.access_token}"}
+      {Authorization: "Bearer #{access_token}"}
     if response.code == 200
       return parse_tag_response(response.body)
     end
@@ -59,7 +76,7 @@ class Clarifai
   def add_tags(docids, tags)
     config = self.class.configuration
     RestClient.post "#{config.url_prefix}/tag", {docids: docids.join(","), add_tags: tags.join(",")},
-      {Authorization: "Bearer #{config.access_token}"}
+      {Authorization: "Bearer #{access_token}"}
   end
 
   # Removes tags from a set of images to improve the image recognition
@@ -72,7 +89,7 @@ class Clarifai
   def remove_tags(docids, tags)
     config = self.class.configuration
     RestClient.post "#{config.url_prefix}/tag", {docids: docids.join(","), remove_tags: tags.join(",")},
-      {Authorization: "Bearer #{config.access_token}"}
+      {Authorization: "Bearer #{access_token}"}
   end
 
   # Add similar images for a set of images
@@ -86,7 +103,7 @@ class Clarifai
     config = self.class.configuration
     RestClient.post "#{config.url_prefix}/tag", {docids: docids.join(","),
       similar_docids: similar_docids.join(",")},
-      {Authorization: "Bearer #{config.access_token}"}
+      {Authorization: "Bearer #{access_token}"}
   end
 
   # Add dissimilar images for a set of images
@@ -100,7 +117,7 @@ class Clarifai
     config = self.class.configuration
     RestClient.post "#{config.url_prefix}/tag", {docids: docids.join(","),
       dissimilar_docids: dissimilar_docids.join(",")},
-      {Authorization: "Bearer #{config.access_token}"}
+      {Authorization: "Bearer #{access_token}"}
   end
 
   private

@@ -75,7 +75,7 @@ class Clarifai
   #   An array of strings representing the new tags for the images
   def add_tags(docids, tags)
     config = self.class.configuration
-    RestClient.post "#{config.url_prefix}/tag", {docids: docids.join(","), add_tags: tags.join(",")},
+    RestClient.post "#{config.url_prefix}/feedback", {docids: docids.join(","), add_tags: tags.join(",")},
       {Authorization: "Bearer #{access_token}"}
   end
 
@@ -88,7 +88,7 @@ class Clarifai
   #   An array of strings representing the tags to remove from the images
   def remove_tags(docids, tags)
     config = self.class.configuration
-    RestClient.post "#{config.url_prefix}/tag", {docids: docids.join(","), remove_tags: tags.join(",")},
+    RestClient.post "#{config.url_prefix}/feedback", {docids: docids.join(","), remove_tags: tags.join(",")},
       {Authorization: "Bearer #{access_token}"}
   end
 
@@ -101,7 +101,7 @@ class Clarifai
   #   An array of strings representing the docids for the images that are similar to the above
   def add_similar_images(docids, similar_docids)
     config = self.class.configuration
-    RestClient.post "#{config.url_prefix}/tag", {docids: docids.join(","),
+    RestClient.post "#{config.url_prefix}/feedback", {docids: docids.join(","),
       similar_docids: similar_docids.join(",")},
       {Authorization: "Bearer #{access_token}"}
   end
@@ -115,7 +115,7 @@ class Clarifai
   #   An array of strings representing the docids for the images that are *not* similar to the above
   def add_dissimilar_images(docids, dissimilar_docids)
     config = self.class.configuration
-    RestClient.post "#{config.url_prefix}/tag", {docids: docids.join(","),
+    RestClient.post "#{config.url_prefix}/feedback", {docids: docids.join(","),
       dissimilar_docids: dissimilar_docids.join(",")},
       {Authorization: "Bearer #{access_token}"}
   end

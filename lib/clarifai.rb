@@ -17,7 +17,7 @@ class Clarifai
   end
 
   def access_token
-    if @token && @token_expiry && @token_expiry < Time.zone.now - 1.hour
+    if @token && @token_expiry && @token_expiry < Time.now - 1.hour
       return @token
     end
 
@@ -30,7 +30,7 @@ class Clarifai
 
     json = JSON.parse(response.body)
     @token = json['access_token']
-    @token_expiry = Time.zone.now + (json['expires_in'] || 36000).seconds
+    @token_expiry = Time.now + (json['expires_in'] || 36000).seconds
   end
 
   # Returns usage limits for the specified Access Token

@@ -190,7 +190,7 @@ class Clarifai
     return nil if !results
     results.each do |result|
       ret << Clarifai::Result.new(docid: result['docid_str'], tags: result['result']['tag']['classes'],
-        status_code: result['status_code'], status_msg: result['msg'], url: result['url'])
+        status_code: result['status_code'], status_msg: result['status_msg'], url: result['url'], json: result)
     end
 
     return ret

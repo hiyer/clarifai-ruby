@@ -1,0 +1,14 @@
+language: ruby
+os:
+  - linux
+  - osx
+rvm:
+  - "2.1" # latest 2.1.x
+  - "2.2" # latest 2.2.x
+script:
+  rspec
+branches:
+  only:
+    - master
+
+sudo: false

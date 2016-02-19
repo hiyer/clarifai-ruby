@@ -6,7 +6,7 @@ clarifai-ruby is an *unofficial* gem to work with the [Clarifai](http://www.clar
 
 Add this line to your application's Gemfile:
 
-    gem 'clarifai', :github => 'hiyer/clarifai'
+    gem 'clarifai', :github => 'hiyer/clarifai-ruby'
 
 And then execute
 

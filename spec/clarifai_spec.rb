@@ -109,4 +109,21 @@ describe Clarifai do
       end
     end
   end
+
+  describe "access token" do
+    before(:all) do
+      Clarifai.configure do |c|
+        c.client_id = 'abc'
+        c.client_secret = 'xyz'
+      end
+    end
+
+    it "fetches access token only once" do
+      allow(RestClient::Request).to receive(:execute).and_return(FakeResponse.new(200, '{"access_token": "foobar", "expires_in": 5000}'))
+      expect(RestClient::Request).to receive(:execute).once
+      3.times do
+        Clarifai.access_token
+      end
+    end
+  end
 end

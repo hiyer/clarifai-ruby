@@ -13,5 +13,9 @@ script:
 branches:
   only:
     - master
+matrix:
+  exclude:
+    - os: osx
+      rvm: '2.2'
 
 sudo: false

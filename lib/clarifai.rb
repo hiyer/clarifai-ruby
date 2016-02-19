@@ -21,8 +21,11 @@ class Clarifai
       return @token
     end
 
+    client_id = configuration.client_id || ENV['CLARIFAI_APP_ID']
+    client_secret = configuration.client_secret || ENV['CLARIFAI_APP_SECRET']
+
     response = RestClient.post "#{configuration.url_prefix}/token",
-      {client_id: configuration.client_id, client_secret: configuration.client_secret, grant_type: 'client_credentials'}
+      {client_id: client_id, client_secret: client_secret, grant_type: 'client_credentials'}
 
     json = JSON.parse(response.body)
     @token_expiry = Time.now + (json['expires_in'] || 176400)

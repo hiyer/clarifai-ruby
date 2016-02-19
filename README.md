@@ -29,6 +29,11 @@ To use Clarifai, you need to sign up and create an application on [their website
       c.client_secret = 'xyz'
     end
 
+Or you may also use the following environment variables:
+
+    $ export CLARIFAI_APP_ID='<client-id>'
+    $ export CLARIFAI_APP_SECRET='<client-secret>'
+
 ## Usage
 
 This gem provides the following interfaces:

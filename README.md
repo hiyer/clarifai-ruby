@@ -1,5 +1,7 @@
 # clarifai-ruby
 
+[![Build Status](https://travis-ci.org/hiyer/clarifai-ruby.png?branch=master)](https://travis-ci.org/hiyer/clarifai-ruby)
+
 clarifai-ruby is an *unofficial* gem to work with the [Clarifai](http://www.clarifai.com/) visual recognition service. It provides simple functions to get classify an image (or video) and also provide feedback for the same. All the intelligence is in Clarifai, and this is just a dumb interface to the same.
 
 ## Installation

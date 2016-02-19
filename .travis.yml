@@ -5,6 +5,8 @@ os:
 rvm:
   - "2.1" # latest 2.1.x
   - "2.2" # latest 2.2.x
+before_script:
+  - gem install rspec --no-ri --no-rdoc
 script:
   rspec
 branches:

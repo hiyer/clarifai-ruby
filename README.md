@@ -56,7 +56,8 @@ Classifies the images (or videos) as described [here](https://developer.clarifai
 ### Provide feedback on classification
 
 #### Add or remove tags
-    Clarifai.add_tags(<array-of-docids>, <array-of-tags-to-add>)Clarifai.remove_tags(<array-of-docids>, <array-of-tags-to-remove>)
+    Clarifai.add_tags(<array-of-docids>, <array-of-tags-to-add>)
+    Clarifai.remove_tags(<array-of-docids>, <array-of-tags-to-remove>)
 
 Add or remove tags or from a list of images or videos. Note that these methods require `docids` and not URLs for the inputs. The docids may be obtained using the `tags` API above. These APIs do not return anything.
 

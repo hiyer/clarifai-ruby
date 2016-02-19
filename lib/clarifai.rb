@@ -16,21 +16,17 @@ class Clarifai
     yield configuration if block_given?
   end
 
-  def access_token
-    if @token && @token_expiry && @token_expiry < Time.now - 1.hour
+  def self.access_token
+    if @token && @token_expiry && ((@token_expiry - Time.now) > 300.0)
       return @token
     end
 
-    config = self.class.configuration
-    response = RestClient.post "#{config.url_prefix}/token", {client_id: config.client_id, client_secret: config.client_secret}
-
-    if response.status_code != 200
-      raise "Unable to get access token: #{response.body}"
-    end
+    response = RestClient.post "#{configuration.url_prefix}/token",
+      {client_id: configuration.client_id, client_secret: configuration.client_secret, grant_type: 'client_credentials'}
 
     json = JSON.parse(response.body)
+    @token_expiry = Time.now + (json['expires_in'] || 176400)
     @token = json['access_token']
-    @token_expiry = Time.now + (json['expires_in'] || 36000).seconds
   end
 
   # Returns usage limits for the specified Access Token
@@ -38,13 +34,9 @@ class Clarifai
   # == Returns:
   # Hash with the usage limits, as specified here:
   # https://developer.clarifai.com/docs/info
-  def info
-    config = self.class.configuration
-    response = RestClient.get "#{config.url_prefix}/info", {"Authorization" => "Bearer #{access_token}"}
-    if response.code == 200
-      return JSON.parse(response.body)
-    end
-    return nil
+  def self.info
+    response = RestClient.get "#{configuration.url_prefix}/info", {Authorization: "Bearer #{access_token}"}
+    return JSON.parse(response.body)
   end
 
   # Gets the tags for a set of images
@@ -55,14 +47,18 @@ class Clarifai
   #
   # == Returns:
   # Array of Clarifai::Result items
-  def tag(image_urls)
-    encoded_urls = image_urls.map { |url| URI.encode(url) }
-    config = self.class.configuration
-    response = RestClient.post "#{config.url_prefix}/tag", {url: encoded_urls},
-      {Authorization: "Bearer #{access_token}"}
+  def self.tag(image_urls)
+    encoded_urls = []
+    image_urls.each do |url|
+      encoded_urls << ['url', url]
+    end
+    response = RestClient.post "#{configuration.url_prefix}/tag", URI::encode_www_form(encoded_urls),
+      { Authorization: "Bearer #{access_token}" }
+
     if response.code == 200
       return parse_tag_response(response.body)
     end
+
     return nil
   end
 
@@ -73,10 +69,14 @@ class Clarifai
   #   An array of strings representing the docids for the images
   # tags::
   #   An array of strings representing the new tags for the images
-  def add_tags(docids, tags)
-    config = self.class.configuration
-    RestClient.post "#{config.url_prefix}/feedback", {docids: docids.join(","), add_tags: tags.join(",")},
+  def self.add_tags(docids, tags)
+    response = RestClient.post "#{configuration.url_prefix}/feedback",
+      {docids: URI.encode(docids.join(",")), add_tags: URI.encode(tags.join(","))},
       {Authorization: "Bearer #{access_token}"}
+
+    if response.code != 201
+      raise "Error adding tags: #{response.body}"
+    end
   end
 
   # Removes tags from a set of images to improve the image recognition
@@ -86,10 +86,14 @@ class Clarifai
   #   An array of strings representing the docids for the images
   # tags::
   #   An array of strings representing the tags to remove from the images
-  def remove_tags(docids, tags)
-    config = self.class.configuration
-    RestClient.post "#{config.url_prefix}/feedback", {docids: docids.join(","), remove_tags: tags.join(",")},
+  def self.remove_tags(docids, tags)
+    response = RestClient.post "#{configuration.url_prefix}/feedback",
+      {docids: URI.encode(docids.join(",")), remove_tags: URI.encode(tags.join(","))},
       {Authorization: "Bearer #{access_token}"}
+
+    if response.code != 201
+      raise "Error removing tags: #{response.body}"
+    end
   end
 
   # Add similar images for a set of images
@@ -99,11 +103,14 @@ class Clarifai
   #   An array of strings representing the docids for the images
   # similar_docids::
   #   An array of strings representing the docids for the images that are similar to the above
-  def add_similar_images(docids, similar_docids)
-    config = self.class.configuration
-    RestClient.post "#{config.url_prefix}/feedback", {docids: docids.join(","),
-      similar_docids: similar_docids.join(",")},
+  def self.add_similar_images(docids, similar_docids)
+    response = RestClient.post "#{configuration.url_prefix}/feedback",
+      {docids: URI.encode(docids.join(",")), similar_docids: URI.encode(similar_docids.join(","))},
       {Authorization: "Bearer #{access_token}"}
+
+    if response.code != 201
+      raise "Error adding similar images: #{response.body}"
+    end
   end
 
   # Add dissimilar images for a set of images
@@ -113,16 +120,19 @@ class Clarifai
   #   An array of strings representing the docids for the images
   # dissimilar_docids::
   #   An array of strings representing the docids for the images that are *not* similar to the above
-  def add_dissimilar_images(docids, dissimilar_docids)
-    config = self.class.configuration
-    RestClient.post "#{config.url_prefix}/feedback", {docids: docids.join(","),
+  def self.add_dissimilar_images(docids, dissimilar_docids)
+    response = RestClient.post "#{configuration.url_prefix}/feedback", {docids: docids.join(","),
       dissimilar_docids: dissimilar_docids.join(",")},
       {Authorization: "Bearer #{access_token}"}
+
+    if response.code != 201
+      raise "Error adding dissimilar images: #{response.body}"
+    end
   end
 
   private
-
-  def parse_tag_response(body)
+  require 'clarifai/result'
+  def self.parse_tag_response(body)
     #   Sample response (v1 API):
     #   [
     #   {
@@ -162,6 +172,7 @@ class Clarifai
     #           ...
     #         ],
     #         "classes": [
+    #
     #           "bathroom",
     #           ...
     #         ],
@@ -176,9 +187,10 @@ class Clarifai
 
     ret = []
     results = JSON.parse(body)['results']
+    return nil if !results
     results.each do |result|
       ret << Clarifai::Result.new(docid: result['docid_str'], tags: result['result']['tag']['classes'],
-        status_code: result['status_code'], status_msg: result['msg', url: result['url']])
+        status_code: result['status_code'], status_msg: result['msg'], url: result['url'])
     end
 
     return ret
@@ -186,4 +198,3 @@ class Clarifai
 end
 
 require 'clarifai/configuration'
-require 'clarifai/result'

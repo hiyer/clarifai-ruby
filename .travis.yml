@@ -7,6 +7,7 @@ rvm:
   - "2.2" # latest 2.2.x
 before_script:
   - gem install rspec --no-ri --no-rdoc
+  - gem install rest-client --no-ri --no-rdoc
 script:
   rspec
 branches:
